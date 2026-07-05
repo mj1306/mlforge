@@ -37,7 +37,7 @@ class CvatService:
             )
         return CvatStatus(state=CvatState.STARTING, job_id=self._last_job_id)
 
-    async def start(self) -> CvatStatus:
+    async def start(self, owner_id: str | None = None) -> CvatStatus:
         async with self._lock:
             current = await self.status()
             if current.state in (CvatState.RUNNING, CvatState.STARTING):
@@ -53,7 +53,7 @@ class CvatService:
                     time.sleep(2)
                 raise TimeoutError("CVAT did not become healthy within the startup timeout")
 
-            record = self.job_manager.submit_cvat_lifecycle(work)
+            record = self.job_manager.submit_cvat_lifecycle(work, owner_id=owner_id)
             self._last_job_id = str(record.id)
             return CvatStatus(state=CvatState.STARTING, job_id=self._last_job_id)
 

@@ -3,12 +3,13 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routers import cvat, datasets, health, jobs, processing, training
+from app.api.routers import auth, cvat, datasets, health, jobs, models, processing, training
 from app.core.config import Settings
 from app.core.errors import register_exception_handlers
 from app.core.logging import configure_logging
 from app.domain.jobs.manager import JobManager
 from app.domain.jobs.registry import InMemoryJobRegistry
+from app.services.auth_service import AuthService
 from app.services.cvat_service import CvatService
 from app.services.dataset_service import DatasetService
 from app.services.processing_service import ProcessingService
@@ -33,6 +34,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     )
 
     app.state.settings = settings
+    app.state.auth_service = AuthService(settings)
     app.state.job_registry = InMemoryJobRegistry()
     app.state.job_manager = JobManager(app.state.job_registry, settings)
     app.state.dataset_service = DatasetService(settings)
@@ -53,6 +55,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     register_exception_handlers(app)
 
     app.include_router(health.router)
+    app.include_router(auth.router)
+    app.include_router(models.router)
     app.include_router(datasets.router)
     app.include_router(processing.router)
     app.include_router(training.router)

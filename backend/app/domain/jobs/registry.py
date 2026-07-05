@@ -9,9 +9,11 @@ from app.domain.schemas.job import JobKind, JobRecord, JobStatus
 
 
 class JobRegistry(Protocol):
-    def create(self, kind: JobKind) -> JobRecord: ...
+    def create(self, kind: JobKind, owner_id: str | None = None) -> JobRecord: ...
 
     def get(self, job_id: UUID) -> JobRecord | None: ...
+
+    def list_for_owner(self, owner_id: str) -> list[JobRecord]: ...
 
     def update_status(
         self,
@@ -45,8 +47,8 @@ class InMemoryJobRegistry:
         self._lock = threading.Lock()
         self._subscribers: dict[UUID, list[asyncio.Queue[dict[str, Any]]]] = {}
 
-    def create(self, kind: JobKind) -> JobRecord:
-        record = JobRecord(kind=kind)
+    def create(self, kind: JobKind, owner_id: str | None = None) -> JobRecord:
+        record = JobRecord(kind=kind, owner_id=owner_id)
         with self._lock:
             self._jobs[record.id] = record
             self._subscribers[record.id] = []
@@ -55,6 +57,11 @@ class InMemoryJobRegistry:
     def get(self, job_id: UUID) -> JobRecord | None:
         with self._lock:
             return self._jobs.get(job_id)
+
+    def list_for_owner(self, owner_id: str) -> list[JobRecord]:
+        with self._lock:
+            records = [r for r in self._jobs.values() if r.owner_id == owner_id]
+        return sorted(records, key=lambda r: r.created_at, reverse=True)
 
     def _require(self, job_id: UUID) -> JobRecord:
         record = self._jobs.get(job_id)

@@ -72,6 +72,18 @@ export interface JobRecord {
   result: Record<string, unknown> | null;
 }
 
+export interface User {
+  id: string;
+  username: string;
+  created_at: string;
+}
+
+export interface TrainedModel {
+  name: string;
+  created_at: string;
+  size_bytes: number;
+}
+
 export type CvatState = "stopped" | "starting" | "running" | "stopping" | "error";
 
 export interface CvatStatus {

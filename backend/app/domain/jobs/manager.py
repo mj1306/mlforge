@@ -31,17 +31,19 @@ class JobManager:
             max_workers=settings.processing_max_workers, thread_name_prefix="processing"
         )
 
-    def submit_training(self, work: Work) -> JobRecord:
-        return self._submit(JobKind.TRAINING, self._training_pool, work)
+    def submit_training(self, work: Work, owner_id: str | None = None) -> JobRecord:
+        return self._submit(JobKind.TRAINING, self._training_pool, work, owner_id)
 
-    def submit_processing(self, work: Work) -> JobRecord:
-        return self._submit(JobKind.PROCESSING, self._processing_pool, work)
+    def submit_processing(self, work: Work, owner_id: str | None = None) -> JobRecord:
+        return self._submit(JobKind.PROCESSING, self._processing_pool, work, owner_id)
 
-    def submit_cvat_lifecycle(self, work: Work) -> JobRecord:
-        return self._submit(JobKind.CVAT_LIFECYCLE, self._processing_pool, work)
+    def submit_cvat_lifecycle(self, work: Work, owner_id: str | None = None) -> JobRecord:
+        return self._submit(JobKind.CVAT_LIFECYCLE, self._processing_pool, work, owner_id)
 
-    def _submit(self, kind: JobKind, pool: ThreadPoolExecutor, work: Work) -> JobRecord:
-        record = self._registry.create(kind)
+    def _submit(
+        self, kind: JobKind, pool: ThreadPoolExecutor, work: Work, owner_id: str | None = None
+    ) -> JobRecord:
+        record = self._registry.create(kind, owner_id=owner_id)
         loop = asyncio.get_running_loop()
 
         def progress_callback(event: dict[str, Any]) -> None:

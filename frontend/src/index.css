@@ -38,3 +38,19 @@ body {
   display: flex;
   flex-direction: column;
 }
+
+/* Floating emoji reaction on the Live Demo page. */
+@keyframes float-up {
+  from {
+    transform: translateY(0) scale(0.6);
+    opacity: 0.9;
+  }
+  to {
+    transform: translateY(-140px) scale(1.4);
+    opacity: 0;
+  }
+}
+
+.animate-float-up {
+  animation: float-up 1.8s ease-out forwards;
+}

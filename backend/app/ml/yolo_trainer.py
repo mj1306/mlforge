@@ -91,6 +91,8 @@ class YoloTrainingRunner:
         batch: int = 16,
         imgsz: int = 640,
         lr0: float = 0.01,
+        project: str | None = None,
+        name: str | None = None,
         progress_callback: ProgressCallback,
         cancel_check: CancelCheck | None = None,
     ) -> dict[str, Any]:
@@ -138,6 +140,12 @@ class YoloTrainingRunner:
         self._model.add_callback("on_train_epoch_end", on_train_epoch_end)
         self._model.add_callback("on_val_end", on_val_end)
 
+        train_kwargs: dict[str, Any] = {}
+        if project is not None:
+            train_kwargs["project"] = project
+        if name is not None:
+            train_kwargs["name"] = name
+
         results = self._model.train(
             data=data_yaml_path,
             epochs=epochs,
@@ -146,6 +154,7 @@ class YoloTrainingRunner:
             lr0=lr0,
             verbose=True,
             device=self._model.overrides.get("device"),
+            **train_kwargs,
         )
 
         if cancel_check is not None and cancel_check():

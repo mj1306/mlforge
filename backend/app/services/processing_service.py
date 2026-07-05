@@ -33,21 +33,21 @@ class ProcessingService:
         self.settings = settings
         self.dataset_service = dataset_service
 
-    def get_random_image(self, dataset_id: str) -> Path:
-        root = self.dataset_service.resolve_root(dataset_id)
+    def get_random_image(self, user_id: str, dataset_id: str) -> Path:
+        root = self.dataset_service.resolve_root(user_id, dataset_id)
         images = _find_images(root)
         if not images:
             raise NoImagesFoundError(f"No images found in dataset {dataset_id}")
         return random.choice(images)
 
-    def count_images(self, dataset_id: str) -> int:
-        root = self.dataset_service.resolve_root(dataset_id)
+    def count_images(self, user_id: str, dataset_id: str) -> int:
+        root = self.dataset_service.resolve_root(user_id, dataset_id)
         return len(_find_images(root))
 
     def apply_processing(
-        self, dataset_id: str, settings: ImageProcessingSettings
+        self, user_id: str, dataset_id: str, settings: ImageProcessingSettings
     ) -> ProcessingResult:
-        root = self.dataset_service.resolve_root(dataset_id)
+        root = self.dataset_service.resolve_root(user_id, dataset_id)
         images = _find_images(root)
         if not images:
             raise NoImagesFoundError(f"No images found in dataset {dataset_id}")

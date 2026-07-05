@@ -10,8 +10,14 @@ uvicorn app.main:app --reload --port 8000
 ```
 
 Env vars (all optional, see `app/core/config.py` for defaults): `DATASET_DIR`, `MODELS_DIR`,
-`LOGS_DIR`, `CORS_ALLOW_ORIGINS`, `TRAINING_MAX_WORKERS`, `PROCESSING_MAX_WORKERS`, `CVAT_URL`,
-`CVAT_COMPOSE_FILE`, `CVAT_STARTUP_TIMEOUT_S`.
+`LOGS_DIR`, `AUTH_DB_PATH`, `SESSION_TTL_DAYS`, `SESSION_COOKIE_SECURE`, `CORS_ALLOW_ORIGINS`,
+`TRAINING_MAX_WORKERS`, `PROCESSING_MAX_WORKERS`, `CVAT_URL`, `CVAT_COMPOSE_FILE`,
+`CVAT_STARTUP_TIMEOUT_S`.
+
+Accounts are stored in a SQLite file (`AUTH_DB_PATH`, default `./data/auth.db`); delete it to
+reset all users and sessions. Register any user via the UI (or
+`curl -X POST localhost:8000/auth/register -H 'content-type: application/json' -d
+'{"username":"dev","password":"password-123"}'`).
 
 Tests:
 

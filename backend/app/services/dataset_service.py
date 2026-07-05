@@ -48,12 +48,19 @@ def _safe_extract(zip_path: Path, extract_to: Path) -> None:
 
 
 class DatasetService:
+    """All operations are scoped by owner: datasets live under
+    dataset_dir/<user_id>/<dataset_id>, so one user's dataset ids simply do
+    not resolve for another user (DatasetNotFoundError, surfaced as 404)."""
+
     def __init__(self, settings: Settings) -> None:
         self.settings = settings
 
-    def upload(self, filename: str, content: bytes) -> DatasetUploadResult:
+    def _user_root(self, user_id: str) -> Path:
+        return self.settings.dataset_dir / user_id
+
+    def upload(self, user_id: str, filename: str, content: bytes) -> DatasetUploadResult:
         dataset_id = f"{_slugify(filename)}-{secrets.token_hex(4)}"
-        dataset_root = self.settings.dataset_dir / dataset_id
+        dataset_root = self._user_root(user_id) / dataset_id
         dataset_root.mkdir(parents=True, exist_ok=True)
 
         archive_path = dataset_root / filename
@@ -86,14 +93,14 @@ class DatasetService:
             dataset_id=dataset_id, yaml_path=str(yaml_path), classes=classes
         )
 
-    def resolve_root(self, dataset_id: str) -> Path:
-        root = self.settings.dataset_dir / dataset_id
+    def resolve_root(self, user_id: str, dataset_id: str) -> Path:
+        root = self._user_root(user_id) / dataset_id
         if not root.is_dir():
             raise DatasetNotFoundError(dataset_id)
         return root
 
-    def get_info(self, dataset_id: str) -> DatasetInfo:
-        root = self.resolve_root(dataset_id)
+    def get_info(self, user_id: str, dataset_id: str) -> DatasetInfo:
+        root = self.resolve_root(user_id, dataset_id)
         yaml_path = self._find_existing_yaml(root)
         if yaml_path is None:
             raise DatasetNotFoundError(f"No data.yaml found for dataset {dataset_id}")
@@ -105,17 +112,18 @@ class DatasetService:
             dataset_id=dataset_id, yaml_path=str(yaml_path), total_images=total_images, data=data
         )
 
-    def list_datasets(self) -> list[str]:
-        if not self.settings.dataset_dir.is_dir():
+    def list_datasets(self, user_id: str) -> list[str]:
+        user_root = self._user_root(user_id)
+        if not user_root.is_dir():
             return []
         return [
             entry.name
-            for entry in self.settings.dataset_dir.iterdir()
+            for entry in user_root.iterdir()
             if entry.is_dir() and self._find_existing_yaml(entry) is not None
         ]
 
-    def update_classes(self, dataset_id: str, classes: dict[int, str]) -> str:
-        root = self.resolve_root(dataset_id)
+    def update_classes(self, user_id: str, dataset_id: str, classes: dict[int, str]) -> str:
+        root = self.resolve_root(user_id, dataset_id)
         yaml_path = self._find_existing_yaml(root)
         if yaml_path is None:
             raise DatasetNotFoundError(f"No data.yaml found for dataset {dataset_id}")

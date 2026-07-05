@@ -20,6 +20,40 @@
 The frontend never talks to CVAT directly -- it calls the backend's `/cvat/*` endpoints, and the
 backend manages CVAT's own Docker Compose project as a separate, independent stack.
 
+## Authentication & per-user data
+
+Session-cookie auth, deliberately boring: `POST /auth/register`/`/auth/login` create a session
+row and set an HttpOnly `mlforge_session` cookie; `GET /auth/me` resolves it;
+`POST /auth/logout` deletes it. `AuthService` (`app/services/auth_service.py`) keeps users and
+sessions in one SQLite file using only the stdlib: scrypt for password hashing, and only the
+SHA-256 of each session token stored, so a leaked db file can't be replayed. No JWTs, no OAuth,
+no refresh tokens -- for a local-first app a server-side session table is simpler and instantly
+revocable.
+
+Everything a user creates is scoped by their id at the storage layer, not by filtering:
+
+- datasets live under `dataset_dir/<user_id>/<dataset_id>` -- `DatasetService.resolve_root`
+  takes the user id, so another user's dataset id raises `DatasetNotFoundError` (404)
+- trained models land in `models_dir/<user_id>/<run>/weights/best.pt` (the training service
+  pins Ultralytics' `project` dir); `GET /models` lists them, `GET /models/{name}/weights`
+  downloads
+- every `JobRecord` carries an `owner_id`; job routes 404 on records the caller doesn't own
+  (404, not 403, so ids can't be probed), and `GET /jobs` lists only the caller's jobs
+
+`get_current_user` in `app/api/deps.py` is the single enforcement point -- every data-owning
+router depends on it. `/health`, `/` and `/auth/*` are the only anonymous endpoints. The CVAT
+stack stays machine-global (it has its own account system), but starting/stopping it still
+requires an MLForge login.
+
+## Frontend auth & public pages
+
+`useAuthStore` calls `GET /auth/me` once on app mount; `RequireAuth` in `App.tsx` blocks the
+Workspace/Annotation/My Models routes until that settles, then redirects to `/login` if there is
+no session. Home and the Live Demo page are public on purpose: the demo (webcam + MediaPipe
+hand-gesture recognition, lazily imported so it doesn't bloat the main bundle) runs entirely
+client-side and is the try-before-you-sign-up hook. All API calls send `credentials: "include"`;
+the SSE `EventSource` sets `withCredentials: true`.
+
 ## Backend layering
 
 ```
@@ -70,8 +104,9 @@ second dataset can never silently redirect an in-flight request for the first on
 
 - `src/api/*` -- one HTTP client (`client.ts`) plus one module per domain (datasets/training/
   processing/cvat). No component talks to `fetch`/`EventSource` directly.
-- `src/store/` -- Zustand (`useAppStore` for training/current-model, `useCvatStore` for CVAT
-  status, which needs a polling loop while CVAT is starting up).
+- `src/store/` -- Zustand (`useAuthStore` for the session user, `useAppStore` for
+  training/current-model, `useCvatStore` for CVAT status, which needs a polling loop while CVAT
+  is starting up).
 - `src/pages/Workspace/` -- the training wizard (select model → upload dataset → image
   processing → hyperparameters → train), each step a self-contained component.
 - `src/config/models/` -- a typed registry of YOLO/ResNet/MobileNet variants with metadata

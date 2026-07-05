@@ -21,7 +21,9 @@ async function parseErrorBody(response: Response): Promise<{ detail?: unknown }>
 }
 
 export async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${BASE_URL}${path}`, init);
+  // credentials: "include" sends the mlforge_session cookie on the
+  // cross-origin (5173 -> 8000) API calls; the backend scopes all data to it.
+  const response = await fetch(`${BASE_URL}${path}`, { credentials: "include", ...init });
   if (!response.ok) {
     const body = await parseErrorBody(response);
     const message =
@@ -35,7 +37,7 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export async function requestBlob(path: string, init?: RequestInit): Promise<Blob> {
-  const response = await fetch(`${BASE_URL}${path}`, init);
+  const response = await fetch(`${BASE_URL}${path}`, { credentials: "include", ...init });
   if (!response.ok) {
     const body = await parseErrorBody(response);
     const message =
@@ -50,7 +52,9 @@ export function subscribeToJobStream<T>(
   onEvent: (data: T) => void,
   onError?: (event: Event) => void,
 ): () => void {
-  const source = new EventSource(`${BASE_URL}/jobs/${jobId}/stream`);
+  const source = new EventSource(`${BASE_URL}/jobs/${jobId}/stream`, {
+    withCredentials: true,
+  });
   source.onmessage = (event) => {
     onEvent(JSON.parse(event.data) as T);
   };

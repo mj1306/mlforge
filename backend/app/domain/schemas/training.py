@@ -1,3 +1,4 @@
+from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -11,3 +12,9 @@ class ModelConfig(BaseModel):
     imgsz: int | None = None
     lr0: float | None = None
     hyperparams: dict[str, Any] = Field(default_factory=dict)
+
+
+class TrainedModel(BaseModel):
+    name: str
+    created_at: datetime
+    size_bytes: int

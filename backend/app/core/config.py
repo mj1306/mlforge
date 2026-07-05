@@ -12,6 +12,14 @@ class Settings(BaseSettings):
     models_dir: Path = Path("./data/models")
     logs_dir: Path = Path("./data/logs")
 
+    # Users + sessions live in a single SQLite file (stdlib sqlite3, no extra
+    # dependency). Sessions are cookie-based; secure=False suits the default
+    # localhost-over-HTTP deployment -- set SESSION_COOKIE_SECURE=true behind
+    # TLS.
+    auth_db_path: Path = Path("./data/auth.db")
+    session_ttl_days: int = 30
+    session_cookie_secure: bool = False
+
     # NoDecode stops pydantic-settings from trying to JSON-decode this env
     # var before our validator runs (it would otherwise reject a plain
     # comma-separated string like "http://a,http://b" as invalid JSON).
@@ -45,3 +53,4 @@ class Settings(BaseSettings):
     def ensure_dirs(self) -> None:
         for directory in (self.dataset_dir, self.models_dir, self.logs_dir):
             directory.mkdir(parents=True, exist_ok=True)
+        self.auth_db_path.parent.mkdir(parents=True, exist_ok=True)

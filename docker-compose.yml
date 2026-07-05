@@ -13,6 +13,9 @@ services:
       DATASET_DIR: /data/datasets
       MODELS_DIR: /data/models
       LOGS_DIR: /data/logs
+      AUTH_DB_PATH: /data/auth/auth.db
+      SESSION_TTL_DAYS: ${SESSION_TTL_DAYS:-30}
+      SESSION_COOKIE_SECURE: ${SESSION_COOKIE_SECURE:-false}
       CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-http://localhost:5173}
       TRAINING_MAX_WORKERS: ${TRAINING_MAX_WORKERS:-1}
       PROCESSING_MAX_WORKERS: ${PROCESSING_MAX_WORKERS:-2}
@@ -23,6 +26,7 @@ services:
       - dataset_data:/data/datasets
       - models_data:/data/models
       - logs_data:/data/logs
+      - auth_data:/data/auth
       - /var/run/docker.sock:/var/run/docker.sock
       - ./docker/cvat:/app/docker/cvat:ro
     extra_hosts:
@@ -57,3 +61,4 @@ volumes:
   dataset_data:
   models_data:
   logs_data:
+  auth_data:

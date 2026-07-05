@@ -21,7 +21,7 @@ describe("cvat api", () => {
     expect(status.state).toBe("stopped");
     expect(fetch).toHaveBeenCalledWith(
       expect.stringContaining("/cvat/status"),
-      undefined,
+      expect.objectContaining({ credentials: "include" }),
     );
   });
 

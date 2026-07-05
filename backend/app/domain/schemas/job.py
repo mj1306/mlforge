@@ -27,6 +27,9 @@ class JobStatus(str, Enum):
 class JobRecord(BaseModel):
     id: UUID = Field(default_factory=uuid4)
     kind: JobKind
+    # id of the user who submitted the job; None only for legacy/system jobs.
+    # Job routes 404 for any record whose owner_id isn't the caller.
+    owner_id: str | None = None
     status: JobStatus = JobStatus.PENDING
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
     started_at: datetime | None = None

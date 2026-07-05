@@ -26,7 +26,9 @@ def test_random_image_missing_dataset_404(client: TestClient) -> None:
 def test_apply_processing_is_non_destructive(
     client: TestClient, uploaded_dataset_id: str, settings
 ) -> None:
-    dataset_root = settings.dataset_dir / uploaded_dataset_id
+    # Datasets live under dataset_dir/<user_id>/<dataset_id>; resolve via a
+    # glob so this test doesn't need to know the fixture user's id.
+    (dataset_root,) = settings.dataset_dir.glob(f"*/{uploaded_dataset_id}")
     original_bytes = (dataset_root / "train" / "images" / "img1.jpg").read_bytes()
 
     response = client.post(

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import FileResponse
 
-from app.api.deps import ProcessingServiceDep
+from app.api.deps import CurrentUserDep, ProcessingServiceDep
 from app.domain.schemas.processing import ImageProcessingSettings, ProcessingResult
 from app.services.dataset_service import DatasetNotFoundError
 from app.services.processing_service import NoImagesFoundError
@@ -10,9 +10,11 @@ router = APIRouter(prefix="/datasets/{dataset_id}/processing", tags=["processing
 
 
 @router.get("/random-image")
-async def get_random_image(dataset_id: str, processing_service: ProcessingServiceDep) -> FileResponse:
+async def get_random_image(
+    dataset_id: str, user: CurrentUserDep, processing_service: ProcessingServiceDep
+) -> FileResponse:
     try:
-        image_path = processing_service.get_random_image(dataset_id)
+        image_path = processing_service.get_random_image(user.id, dataset_id)
     except DatasetNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except NoImagesFoundError as exc:
@@ -21,9 +23,11 @@ async def get_random_image(dataset_id: str, processing_service: ProcessingServic
 
 
 @router.get("/info")
-async def get_processing_info(dataset_id: str, processing_service: ProcessingServiceDep) -> dict:
+async def get_processing_info(
+    dataset_id: str, user: CurrentUserDep, processing_service: ProcessingServiceDep
+) -> dict:
     try:
-        total_images = processing_service.count_images(dataset_id)
+        total_images = processing_service.count_images(user.id, dataset_id)
     except DatasetNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     return {"dataset_id": dataset_id, "total_images": total_images}
@@ -31,10 +35,13 @@ async def get_processing_info(dataset_id: str, processing_service: ProcessingSer
 
 @router.post("/apply", response_model=ProcessingResult)
 async def apply_processing(
-    dataset_id: str, settings: ImageProcessingSettings, processing_service: ProcessingServiceDep
+    dataset_id: str,
+    settings: ImageProcessingSettings,
+    user: CurrentUserDep,
+    processing_service: ProcessingServiceDep,
 ) -> ProcessingResult:
     try:
-        return processing_service.apply_processing(dataset_id, settings)
+        return processing_service.apply_processing(user.id, dataset_id, settings)
     except DatasetNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc
     except NoImagesFoundError as exc:

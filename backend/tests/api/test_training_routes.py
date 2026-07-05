@@ -12,7 +12,19 @@ class _FakeRunner:
         self.model = model
         self.hyperparams = hyperparams
 
-    def train(self, data_yaml_path, *, epochs, batch, imgsz, lr0, progress_callback, cancel_check):
+    def train(
+        self,
+        data_yaml_path,
+        *,
+        epochs,
+        batch,
+        imgsz,
+        lr0,
+        project=None,
+        name=None,
+        progress_callback,
+        cancel_check,
+    ):
         progress_callback({"stage": "preparing", "epoch": 0})
         progress_callback({"stage": "training", "epoch": 1})
         return {"results_dir": "/fake/results"}
