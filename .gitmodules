@@ -1,0 +1,3 @@
+[submodule "docker/cvat/cvat"]
+	path = docker/cvat/cvat
+	url = https://github.com/cvat-ai/cvat.git

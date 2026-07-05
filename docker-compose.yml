@@ -1,0 +1,59 @@
+name: mlforge
+
+services:
+  backend:
+    build:
+      context: ./backend
+      args:
+        TORCH_INDEX_URL: ${TORCH_INDEX_URL:-}
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-8000}:8000"
+    environment:
+      DATASET_DIR: /data/datasets
+      MODELS_DIR: /data/models
+      LOGS_DIR: /data/logs
+      CORS_ALLOW_ORIGINS: ${CORS_ALLOW_ORIGINS:-http://localhost:5173}
+      TRAINING_MAX_WORKERS: ${TRAINING_MAX_WORKERS:-1}
+      PROCESSING_MAX_WORKERS: ${PROCESSING_MAX_WORKERS:-2}
+      CVAT_URL: ${CVAT_URL:-http://host.docker.internal:8080}
+      CVAT_COMPOSE_FILE: /app/docker/cvat/cvat/docker-compose.yml
+      CVAT_STARTUP_TIMEOUT_S: ${CVAT_STARTUP_TIMEOUT_S:-120}
+    volumes:
+      - dataset_data:/data/datasets
+      - models_data:/data/models
+      - logs_data:/data/logs
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./docker/cvat:/app/docker/cvat:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # GPU passthrough: requires the NVIDIA Container Toolkit on the host.
+    # Remove this block (or use docker-compose.override.yml) for CPU-only.
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000}
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-5173}:80"
+    depends_on:
+      - backend
+
+volumes:
+  dataset_data:
+  models_data:
+  logs_data:
