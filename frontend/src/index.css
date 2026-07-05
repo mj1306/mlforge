@@ -18,21 +18,19 @@
   --color-status-info: #3b82f6;
 }
 
-@media (prefers-color-scheme: dark) {
-  @theme {
-    --color-surface: #16171d;
-    --color-surface-muted: #1f2028;
-    --color-surface-accent: #2e303a;
-    --color-border-default: #2e303a;
-  }
-}
+/* Every component here (Card, Button, Input, the workspace steps, etc.)
+   was built with light-mode-only Tailwind text classes (text-gray-700,
+   text-gray-800, ...) that don't have dark-mode pairs. Letting the surface
+   tokens flip dark via prefers-color-scheme while that text stays dark
+   produces unreadable dark-on-dark UI, so the app is pinned to light mode
+   for now regardless of OS/browser theme. */
 
 body {
   margin: 0;
   min-height: 100svh;
   font-family: system-ui, "Segoe UI", Roboto, sans-serif;
   background: var(--color-surface);
-  color-scheme: light dark;
+  color-scheme: light;
 }
 
 #root {
