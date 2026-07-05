@@ -16,11 +16,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY pyproject.toml ./
 RUN python -m venv /opt/venv
 ENV PATH="/opt/venv/bin:$PATH"
-RUN if [ -n "$TORCH_INDEX_URL" ]; then \
-      pip install --no-cache-dir --extra-index-url "$TORCH_INDEX_URL" .; \
-    else \
-      pip install --no-cache-dir .; \
-    fi
+
+# torch/torchvision/torchaudio are installed separately, first, from an
+# explicit --index-url (not --extra-index-url -- pip doesn't reliably
+# prefer one index over another when both have a matching version, so a
+# full index swap is needed to actually get the CPU build). This matters
+# because PyPI's default Linux wheel for torch bundles the full CUDA
+# runtime (several hundred MB of nvidia-cusolver/cusparse/etc. wheels)
+# even with no GPU involved -- "no TORCH_INDEX_URL set" must mean CPU, not
+# "whatever pip's default index gives you." Pass --build-arg
+# TORCH_INDEX_URL=https://download.pytorch.org/whl/cu121 (or your CUDA
+# version) for GPU wheels instead.
+RUN pip install --no-cache-dir torch torchvision \
+      --index-url "${TORCH_INDEX_URL:-https://download.pytorch.org/whl/cpu}"
+# Everything else (fastapi, ultralytics, opencv, ...) comes from regular
+# PyPI; torch is already satisfied so pip won't touch it.
+RUN pip install --no-cache-dir .
 
 FROM python:3.11-slim AS runtime
 
