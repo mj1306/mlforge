@@ -35,17 +35,21 @@ RUN pip install --no-cache-dir .
 
 FROM python:3.11-slim AS runtime
 
-# docker.io gives us the `docker` CLI to talk to the host daemon via the
-# mounted socket (see docker-compose.yml); the compose v2 plugin isn't in
-# Debian's default repos, so it's fetched directly from Docker's releases.
-# Both are only used by the optional CVAT launch feature -- the rest of the
-# app doesn't need them.
+# The `docker` CLI + compose plugin let this container talk to the host's
+# daemon via the mounted socket (see docker-compose.yml), for the optional
+# CVAT launch feature -- nothing else in the app needs them. Debian's
+# docker.io package pulls in dockerd/containerd/runc (a daemon we never
+# run) and on some Debian releases doesn't even ship the `docker` client
+# binary itself, only dockerd -- so both the CLI and the compose plugin
+# are fetched directly from Docker's own static releases instead.
+ARG DOCKER_CLI_VERSION=29.6.1
 ARG COMPOSE_VERSION=v2.29.7
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1 \
     libglib2.0-0 \
-    docker.io \
     curl \
+    && curl -fsSL "https://download.docker.com/linux/static/stable/x86_64/docker-${DOCKER_CLI_VERSION}.tgz" \
+       | tar -xzf - --strip-components=1 -C /usr/local/bin docker/docker \
     && mkdir -p /usr/local/lib/docker/cli-plugins \
     && curl -fsSL "https://github.com/docker/compose/releases/download/${COMPOSE_VERSION}/docker-compose-linux-x86_64" \
        -o /usr/local/lib/docker/cli-plugins/docker-compose \
