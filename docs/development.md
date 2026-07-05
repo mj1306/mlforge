@@ -41,4 +41,4 @@ npm run test:watch
 Start the backend (port 8000) and frontend (port 5173) as above in two terminals -- no Docker
 needed for day-to-day iteration. CVAT still requires Docker (it's CVAT's own multi-container
 stack); in bare-metal dev mode `CVAT_URL` defaults to `http://localhost:8080`, matching a CVAT
-stack started directly via `cd docker/cvat/cvat && docker compose -p mlforge-cvat up -d`.
+stack started directly via `docker compose -p mlforge-cvat -f docker/cvat/docker-compose.yml up -d`.

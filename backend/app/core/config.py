@@ -29,16 +29,17 @@ class Settings(BaseSettings):
     training_max_workers: int = 1
     processing_max_workers: int = 2
 
-    # Points at the vendored upstream CVAT compose file (git submodule) --
-    # used unmodified. Health-checked over HTTP, not over the docker network,
-    # so this URL must be reachable from wherever the backend process runs:
+    # Points at the vendored upstream CVAT compose file (plain file, copied
+    # from cvat-ai/cvat -- see docker/cvat/docker-compose.yml's header
+    # comment). Health-checked over HTTP, not over the docker network, so
+    # this URL must be reachable from wherever the backend process runs:
     # localhost for bare-metal dev, http://host.docker.internal:8080 when the
     # backend itself is inside the Docker Compose stack (see docker-compose.yml).
     cvat_url: str = "http://localhost:8080"
     # Default suits running the backend bare-metal from backend/ (dev mode).
-    # docker-compose.yml overrides this to /app/docker/cvat/cvat/docker-compose.yml,
+    # docker-compose.yml overrides this to /app/docker/cvat/docker-compose.yml,
     # matching where docker/cvat is bind-mounted inside the container.
-    cvat_compose_file: Path = Path("../docker/cvat/cvat/docker-compose.yml")
+    cvat_compose_file: Path = Path("../docker/cvat/docker-compose.yml")
     cvat_startup_timeout_s: int = 120
 
     def ensure_dirs(self) -> None:

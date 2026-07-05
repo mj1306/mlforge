@@ -17,7 +17,7 @@ services:
       TRAINING_MAX_WORKERS: ${TRAINING_MAX_WORKERS:-1}
       PROCESSING_MAX_WORKERS: ${PROCESSING_MAX_WORKERS:-2}
       CVAT_URL: ${CVAT_URL:-http://host.docker.internal:8080}
-      CVAT_COMPOSE_FILE: /app/docker/cvat/cvat/docker-compose.yml
+      CVAT_COMPOSE_FILE: /app/docker/cvat/docker-compose.yml
       CVAT_STARTUP_TIMEOUT_S: ${CVAT_STARTUP_TIMEOUT_S:-120}
     volumes:
       - dataset_data:/data/datasets

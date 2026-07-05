@@ -2,17 +2,17 @@
 
 ## How it's vendored
 
-CVAT is included as a git submodule at `docker/cvat/cvat`, pinned to a specific release tag
-(currently `v2.69.0`), used **unmodified** -- we run its own `docker-compose.yml` directly rather
-than copying/merging it into our own compose file. CVAT's stack (server, db, redis, several rq
-workers, UI, traefik, opa, clickhouse, grafana) is non-trivial and changes across releases;
-vendoring a copy would drift silently every time we wanted to bump versions. A submodule keeps
-"what CVAT version are we on" a single pinned commit, and `git submodule update --remote` is the
-whole upgrade process.
+`docker/cvat/docker-compose.yml` and `docker/cvat/components/analytics/` are copied verbatim from
+[cvat-ai/cvat](https://github.com/cvat-ai/cvat) at tag `v2.69.0` (see the header comment in that
+file for the exact commit). This is a **plain copy, not a git submodule** -- CVAT's own compose
+file doesn't build anything from source; every service (`cvat/server`, `cvat/ui`, `postgres`,
+`redis`, `traefik`, etc.) pulls a prebuilt image from Docker Hub. Since we never need CVAT's
+source tree, vendoring the ~15KB compose file plus ~180KB of analytics config is strictly simpler
+than a submodule pointing at their whole repo: `git clone` alone just works, with no
+`--recurse-submodules` or `git submodule update --init` step to remember.
 
-If you clone this repo without `--recurse-submodules`, the `docker/cvat/cvat` directory will be
-empty -- run `git submodule update --init` once to fetch it. This is only needed if you actually
-want to use the annotation feature; the rest of the app doesn't depend on it.
+To upgrade to a newer CVAT release, replace both `docker-compose.yml` and `components/analytics/`
+with the versions from that release's tag, and update the header comment.
 
 ## How the backend manages it
 
@@ -21,7 +21,7 @@ want to use the annotation feature; the rest of the app doesn't depend on it.
 - **`status()`** -- checks whether CVAT's containers are running (`docker compose ps --status
   running`), then probes `GET {CVAT_URL}/api/server/health/` to distinguish "containers up but
   not ready yet" (`starting`) from actually `running`.
-- **`start()`** -- runs `docker compose -p mlforge-cvat -f <submodule>/docker-compose.yml up -d` via
+- **`start()`** -- runs `docker compose -p mlforge-cvat -f docker/cvat/docker-compose.yml up -d` via
   `asyncio.create_subprocess_exec` (never `shell=True`), tracked as a job so the frontend can poll
   the same way it polls training jobs, and polls health until it's up or `CVAT_STARTUP_TIMEOUT_S`
   elapses.

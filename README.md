@@ -10,16 +10,13 @@ annotating data before training.
 Requirements: [Docker](https://docs.docker.com/get-docker/) and Docker Compose v2.
 
 ```bash
-git clone --recurse-submodules <this-repo-url>
+git clone <this-repo-url>
 cd mlforge
 cp .env.example .env
 docker compose up --build
 ```
 
 Then open **http://localhost:5173**.
-
-If you already cloned without `--recurse-submodules`, run `git submodule update --init` once
-(needed only if you plan to use the CVAT annotation feature).
 
 ### GPU training
 
@@ -37,16 +34,16 @@ there).
 ## Annotation with CVAT
 
 Click **"Launch CVAT"** on the Annotation page -- the backend starts CVAT's own Docker Compose
-stack (as a git submodule under `docker/cvat/cvat`) and reports back once it's healthy, with a
-link to open it. See [docs/cvat-integration.md](docs/cvat-integration.md) for how this works and
-its trade-offs (it requires giving the backend container access to the host's Docker socket).
+stack (vendored, unmodified, at `docker/cvat/docker-compose.yml`) and reports back once it's
+healthy, with a link to open it. See [docs/cvat-integration.md](docs/cvat-integration.md) for how
+this works and its trade-offs (it requires giving the backend container access to the host's
+Docker socket).
 
 You can also start/stop CVAT directly without going through the app:
 
 ```bash
-cd docker/cvat/cvat
-docker compose -p mlforge-cvat up -d    # start
-docker compose -p mlforge-cvat stop     # stop (keeps annotation data)
+docker compose -p mlforge-cvat -f docker/cvat/docker-compose.yml up -d    # start
+docker compose -p mlforge-cvat -f docker/cvat/docker-compose.yml stop     # stop (keeps annotation data)
 ```
 
 ## Repository layout
@@ -54,7 +51,7 @@ docker compose -p mlforge-cvat stop     # stop (keeps annotation data)
 ```
 backend/    FastAPI + PyTorch/Ultralytics training service
 frontend/   React + Vite web app
-docker/cvat/cvat   CVAT, vendored as a git submodule (pinned release tag)
+docker/cvat/  CVAT's docker-compose.yml, vendored unmodified from cvat-ai/cvat
 docs/       Architecture notes, CVAT integration details, local dev without Docker
 ```
 
