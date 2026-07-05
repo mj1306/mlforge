@@ -26,3 +26,6 @@ backend/data/
 
 # Vite
 frontend/*.local
+
+# Claude
+CLAUDE.md
