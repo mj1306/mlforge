@@ -6,7 +6,13 @@ ARG VITE_API_BASE_URL=http://localhost:8000
 FROM node:20-alpine AS builder
 WORKDIR /build
 COPY package.json package-lock.json* ./
-RUN npm ci
+# npm ci is avoided here: @tailwindcss/oxide's optional WASM fallback
+# (@tailwindcss/oxide-wasm32-wasi, pulling in @emnapi/core/@emnapi/runtime)
+# resolves to slightly different versions across npm install runs, which
+# repeatedly makes npm ci reject an otherwise-fine lock file as "out of
+# sync." npm install tolerates that drift and still respects the lock
+# file's pinned versions for everything else.
+RUN npm install
 COPY . .
 ARG VITE_API_BASE_URL
 ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
