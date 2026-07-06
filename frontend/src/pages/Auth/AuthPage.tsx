@@ -30,6 +30,14 @@ export function AuthPage() {
     event.preventDefault();
     setLocalError(null);
     if (mode === "register") {
+      // Mirror the backend's RegisterRequest constraints so the user gets a
+      // readable message instead of a raw 422.
+      if (!/^[a-zA-Z0-9_-]{3,32}$/.test(username)) {
+        setLocalError(
+          "Username must be 3–32 characters, using only letters, numbers, hyphens, or underscores — no spaces or email addresses.",
+        );
+        return;
+      }
       if (password !== confirm) {
         setLocalError("Passwords do not match");
         return;

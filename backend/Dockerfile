@@ -65,7 +65,11 @@ ENV PATH="/opt/venv/bin:$PATH" \
 WORKDIR /app
 COPY app ./app
 
-RUN mkdir -p /data/datasets /data/models /data/logs && chown -R appuser:appuser /data /app
+# Pre-create every /data subdir that a named volume mounts onto, owned by
+# appuser: an empty named volume inherits the mount point's ownership, so
+# missing one here means that volume lands as root and the non-root app
+# can't write it (e.g. sqlite "unable to open database file" for auth.db).
+RUN mkdir -p /data/datasets /data/models /data/logs /data/auth && chown -R appuser:appuser /data /app
 USER appuser
 
 EXPOSE 8000
